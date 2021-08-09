@@ -8,7 +8,7 @@ with once-off user sessions. This package allows you to control the behavior for
 and authenticated user sessions, so your user-sessions table (and your database) doesn't fill with junk!
 
 # Quickstart
-1. Replace your Django session middlewar with django-dual session middleware.
+1. Replace your Django session middleware with django-dual session middleware.
 2. Set a backend in your `settings.py` for both unauthenticated and authenticated users. You need to set a `UNAUTH_SESSION_ENGINE` and
 and a `AUTH_SESSION_ENGINE`.
 
