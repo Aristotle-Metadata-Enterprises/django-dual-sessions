@@ -5,17 +5,23 @@ authed users and unauthed users
 from importlib import import_module
 
 from django.contrib.sessions.middleware import SessionMiddleware
+from django.utils.functional import SimpleLazyObject
+from django.contrib import auth
 from django.contrib.sessions.backends.base import SessionBase
 from django.conf import settings
 
 from typing import Dict
 
+def get_user(request):
+    if not hasattr(request, '_cached_user'):
+        request._cached_user = auth.get_user(request)
+    return request._cached_user
+
 
 class DualSessionMiddleware(SessionMiddleware):
     def __init__(self, get_response):
         super().__init__(get_response)
-        # Never used, required during init
-        default_engine = import_module(settings.AUTH_SESSION_ENGINE)
+        default_engine = import_module(settings.UNAUTH_SESSION_ENGINE)
         self.SessionStore = default_engine.SessionStore
 
     def get_unauth_store(self) -> SessionBase:
@@ -44,7 +50,13 @@ class DualSessionMiddleware(SessionMiddleware):
         raise NotImplemented
 
     def process_request(self, request):
-        # Get the session key
+        # We need to get the session first because the AuthenticationMiddleware - which
+        # attaches the user object to the request - needs the session to get the user
+        # And this solves the chicken and the egg problem (technical term).
+
+        super().process_request(request)
+        request.user = SimpleLazyObject(lambda: get_user(request))
+
         session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
         if request.user.is_authenticated:
             SessionStore = self.get_auth_store()
