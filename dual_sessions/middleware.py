@@ -21,7 +21,7 @@ class DualSessionMiddleware(SessionMiddleware):
         return engine.SessionStore
 
     def get_auth_store(self) -> SessionBase:
-        engine = import_module(settings.UNUTH_SESSION_ENGINE)
+        engine = import_module(settings.UNAUTH_SESSION_ENGINE)
         return engine.SessionStore
 
     def process_request(self, request):
