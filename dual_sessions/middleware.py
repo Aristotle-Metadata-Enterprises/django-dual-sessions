@@ -8,7 +8,7 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.sessions.backends.base import SessionBase
 from django.conf import settings
 
-from typing import Iterable
+from typing import Dict
 
 
 class DualSessionMiddleware(SessionMiddleware):
@@ -26,17 +26,17 @@ class DualSessionMiddleware(SessionMiddleware):
         engine = import_module(settings.UNAUTH_SESSION_ENGINE)
         return engine.SessionStore
 
-    def create_store(self, SessionStore, session_key, *args):
-        return SessionStore(session_key, *args)
+    def create_store(self, SessionStore, session_key, **kwargs):
+        return SessionStore(session_key, **kwargs)
 
-    def get_auth_args(self, request) -> Iterable:
+    def get_auth_args(self, request) -> Dict:
         """
         Get arguments for creating the authenticated SessionStore object
         Note: this is only required if you are using a custom Session backend
          """
         raise NotImplemented
 
-    def get_unauth_args(self, request) -> Iterable:
+    def get_unauth_args(self, request) -> Dict:
         """
         Get arguments for creating the unauthenticated SessionStore object
         Note: this is only required if you are using a custom Session backend
@@ -48,7 +48,7 @@ class DualSessionMiddleware(SessionMiddleware):
         session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
         if request.user.is_authenticated:
             SessionStore = self.get_auth_store()
-            request.session = self.create_store(SessionStore, session_key, *self.get_auth_args(request))
+            request.session = self.create_store(SessionStore, session_key, **self.get_auth_args(request))
         else:
             SessionStore = self.get_unauth_store()
-            request.session = self.create_store(SessionStore, session_key, *self.get_unauth_args(request))
+            request.session = self.create_store(SessionStore, session_key, **self.get_unauth_args(request))
