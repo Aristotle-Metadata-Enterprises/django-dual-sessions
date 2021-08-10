@@ -29,14 +29,14 @@ class DualSessionMiddleware(SessionMiddleware):
     def create_store(self, SessionStore, session_key, *args):
         return SessionStore(session_key, *args)
 
-    def get_auth_args(self) -> Iterable:
+    def get_auth_args(self, request) -> Iterable:
         """
         Get arguments for creating the authenticated SessionStore object
         Note: this is only required if you are using a custom Session backend
          """
         raise NotImplemented
 
-    def get_unauth_args(self) -> Iterable:
+    def get_unauth_args(self, request) -> Iterable:
         """
         Get arguments for creating the unauthenticated SessionStore object
         Note: this is only required if you are using a custom Session backend
@@ -48,7 +48,7 @@ class DualSessionMiddleware(SessionMiddleware):
         session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
         if request.user.is_authenticated:
             SessionStore = self.get_auth_store()
-            request.session = self.create_store(SessionStore, session_key, *self.get_auth_args())
+            request.session = self.create_store(SessionStore, session_key, *self.get_auth_args(request))
         else:
             SessionStore = self.get_unauth_store()
-            request.session = self.create_store(SessionStore, session_key, *self.get_unauth_args())
+            request.session = self.create_store(SessionStore, session_key, *self.get_unauth_args(request))
