@@ -12,6 +12,11 @@ from django.conf import settings
 
 from typing import Dict
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 def get_user(request):
     if not hasattr(request, '_cached_user'):
         request._cached_user = auth.get_user(request)
@@ -53,9 +58,15 @@ class DualSessionMiddleware(SessionMiddleware):
         # We need to get the session first because the AuthenticationMiddleware - which
         # attaches the user object to the request - needs the session to get the user
         # And this solves the chicken and the egg problem (technical term).
-
         super().process_request(request)
+        if settings.DEBUG:
+            logger.info("After super call on process request")
+            logger.info(f'{request.session=}')
+
         request.user = SimpleLazyObject(lambda: get_user(request))
+
+        if settings.DEBUG:
+            logger.info(f'{request.user=}')
 
         session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
         if request.user.is_authenticated:
@@ -64,3 +75,8 @@ class DualSessionMiddleware(SessionMiddleware):
         else:
             SessionStore = self.get_unauth_store()
             request.session = self.create_store(SessionStore, session_key, **self.get_unauth_args(request))
+
+        if settings.DEBUG:
+            logger.info("After django dual sessions")
+            logger.info(f'{request.session=}')
+            logger.info(f'{request.user=}')
